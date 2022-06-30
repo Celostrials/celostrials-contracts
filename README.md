@@ -1,9 +1,17 @@
+![Celostrials](https://rebrand.celostrials.com/images/preview.gif)
+
 # 🏄‍♂️ Quick Start
 
 > install dependancies
 
 ```bash
 yarn
+```
+
+> generate types
+
+```
+yarn typechain
 ```
 
 > start hardhat chain
