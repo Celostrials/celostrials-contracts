@@ -43,14 +43,14 @@ const func: DeployFunction = async function (hardhat: HardhatRuntimeEnvironment)
   )
 
   // CarbonStaking deploy
-  // const carbonStakingAbi = (await hardhat.artifacts.readArtifact("CarbonizedCollection")).abi
-  // const carbonStakingArgs = [
-  //   (await hardhat.ethers.getSigners())[0].address,
-  //   mockCelo.address,
-  //   carbonizedCollectionAddress,
-  // ]
+  const carbonStakingAbi = (await hardhat.artifacts.readArtifact("CarbonizedCollection")).abi
+  const carbonStakingArgs = [
+    (await hardhat.ethers.getSigners())[0].address,
+    mockCelo.address,
+    carbonizedCollectionAddress,
+  ]
 
-  // await deployProxyAndSave("CarbonStaking", carbonStakingArgs, hardhat, carbonStakingAbi)
+  await deployProxyAndSave("CarbonStaking", carbonStakingArgs, hardhat, carbonStakingAbi)
 }
 export default func
 func.tags = ["carbon"]

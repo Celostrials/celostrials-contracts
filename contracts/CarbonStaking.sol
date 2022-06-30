@@ -4,22 +4,22 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interface/ICarbonizedCollection.sol";
 
-contract CarbonStaking is ReentrancyGuard, PausableUpgradeable, OwnableUpgradeable {
-    using SafeERC20 for IERC20;
+contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, OwnableUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 public rewardsToken;
-    uint256 public periodFinish = 0;
-    uint256 public rewardRate = 0;
-    uint256 public rewardsDuration = 90 days;
+    IERC20Upgradeable public rewardsToken;
+    uint256 public periodFinish;
+    uint256 public rewardRate;
+    uint256 public rewardsDuration;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
     address public rewardsDistributor;
@@ -41,9 +41,12 @@ contract CarbonStaking is ReentrancyGuard, PausableUpgradeable, OwnableUpgradeab
     ) external virtual initializer {
         __Ownable_init();
         __Pausable_init();
-        rewardsToken = IERC20(_rewardsToken);
+        rewardsToken = IERC20Upgradeable(_rewardsToken);
         carbonCollection = ICarbonizedCollection(_carbonCollection);
         rewardsDistributor = _rewardsDistributor;
+        periodFinish = 0;
+        rewardRate = 0;
+        rewardsDuration = 90 days;
     }
 
     /* ========== VIEWS ========== */
@@ -143,7 +146,7 @@ contract CarbonStaking is ReentrancyGuard, PausableUpgradeable, OwnableUpgradeab
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(carbonCollection), "Cannot withdraw the staking token");
-        IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
+        IERC20Upgradeable(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
