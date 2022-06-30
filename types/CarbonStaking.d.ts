@@ -22,10 +22,12 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface CarbonStakingInterface extends ethers.utils.Interface {
   functions: {
     "balanceOf(address)": FunctionFragment;
+    "carbonCollection()": FunctionFragment;
     "earned(address)": FunctionFragment;
     "exit()": FunctionFragment;
     "getReward()": FunctionFragment;
     "getRewardForDuration()": FunctionFragment;
+    "initialize(address,address,address)": FunctionFragment;
     "lastTimeRewardApplicable()": FunctionFragment;
     "lastUpdateTime()": FunctionFragment;
     "notifyRewardAmount(uint256)": FunctionFragment;
@@ -44,7 +46,6 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
     "setRewardsDistribution(address)": FunctionFragment;
     "setRewardsDuration(uint256)": FunctionFragment;
     "stake(uint256)": FunctionFragment;
-    "stakingToken()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateActiveRewardsDuration(uint256)": FunctionFragment;
@@ -53,12 +54,20 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   };
 
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "carbonCollection",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "earned", values: [string]): string;
   encodeFunctionData(functionFragment: "exit", values?: undefined): string;
   encodeFunctionData(functionFragment: "getReward", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getRewardForDuration",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "lastTimeRewardApplicable",
@@ -121,10 +130,6 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "stake", values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "stakingToken",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "totalSupply",
     values?: undefined
   ): string;
@@ -146,6 +151,10 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "carbonCollection",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "earned", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "exit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getReward", data: BytesLike): Result;
@@ -153,6 +162,7 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
     functionFragment: "getRewardForDuration",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "lastTimeRewardApplicable",
     data: BytesLike
@@ -211,10 +221,6 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "stake", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "stakingToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
   ): Result;
@@ -233,6 +239,7 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "Initialized(uint8)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
     "Recovered(address,uint256)": EventFragment;
@@ -244,6 +251,7 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
     "Withdrawn(address,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Recovered"): EventFragment;
@@ -254,6 +262,8 @@ interface CarbonStakingInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdrawn"): EventFragment;
 }
+
+export type InitializedEvent = TypedEvent<[number] & { version: number }>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string] & { previousOwner: string; newOwner: string }
@@ -331,6 +341,8 @@ export class CarbonStaking extends BaseContract {
   functions: {
     balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    carbonCollection(overrides?: CallOverrides): Promise<[string]>;
+
     earned(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     exit(
@@ -342,6 +354,13 @@ export class CarbonStaking extends BaseContract {
     ): Promise<ContractTransaction>;
 
     getRewardForDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    initialize(
+      _rewardsDistributor: string,
+      _rewardsToken: string,
+      _carbonCollection: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     lastTimeRewardApplicable(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -397,8 +416,6 @@ export class CarbonStaking extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    stakingToken(overrides?: CallOverrides): Promise<[string]>;
-
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transferOwnership(
@@ -424,6 +441,8 @@ export class CarbonStaking extends BaseContract {
 
   balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  carbonCollection(overrides?: CallOverrides): Promise<string>;
+
   earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   exit(
@@ -435,6 +454,13 @@ export class CarbonStaking extends BaseContract {
   ): Promise<ContractTransaction>;
 
   getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
+
+  initialize(
+    _rewardsDistributor: string,
+    _rewardsToken: string,
+    _carbonCollection: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -490,8 +516,6 @@ export class CarbonStaking extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  stakingToken(overrides?: CallOverrides): Promise<string>;
-
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   transferOwnership(
@@ -517,6 +541,8 @@ export class CarbonStaking extends BaseContract {
   callStatic: {
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    carbonCollection(overrides?: CallOverrides): Promise<string>;
+
     earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     exit(overrides?: CallOverrides): Promise<void>;
@@ -524,6 +550,13 @@ export class CarbonStaking extends BaseContract {
     getReward(overrides?: CallOverrides): Promise<void>;
 
     getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
+
+    initialize(
+      _rewardsDistributor: string,
+      _rewardsToken: string,
+      _carbonCollection: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -574,8 +607,6 @@ export class CarbonStaking extends BaseContract {
 
     stake(tokenId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    stakingToken(overrides?: CallOverrides): Promise<string>;
-
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferOwnership(
@@ -597,6 +628,14 @@ export class CarbonStaking extends BaseContract {
   };
 
   filters: {
+    "Initialized(uint8)"(
+      version?: null
+    ): TypedEventFilter<[number], { version: number }>;
+
+    Initialized(
+      version?: null
+    ): TypedEventFilter<[number], { version: number }>;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -709,6 +748,8 @@ export class CarbonStaking extends BaseContract {
   estimateGas: {
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    carbonCollection(overrides?: CallOverrides): Promise<BigNumber>;
+
     earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     exit(
@@ -720,6 +761,13 @@ export class CarbonStaking extends BaseContract {
     ): Promise<BigNumber>;
 
     getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
+
+    initialize(
+      _rewardsDistributor: string,
+      _rewardsToken: string,
+      _carbonCollection: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -775,8 +823,6 @@ export class CarbonStaking extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    stakingToken(overrides?: CallOverrides): Promise<BigNumber>;
-
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferOwnership(
@@ -806,6 +852,8 @@ export class CarbonStaking extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    carbonCollection(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     earned(
       account: string,
       overrides?: CallOverrides
@@ -821,6 +869,13 @@ export class CarbonStaking extends BaseContract {
 
     getRewardForDuration(
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      _rewardsDistributor: string,
+      _rewardsToken: string,
+      _carbonCollection: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     lastTimeRewardApplicable(
@@ -885,8 +940,6 @@ export class CarbonStaking extends BaseContract {
       tokenId: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    stakingToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
