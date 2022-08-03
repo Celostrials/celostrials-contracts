@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types"
 import { deployProxyAndSave } from "../utils/utils"
 import { deployments, ethers } from "hardhat"
 import { parseEther } from "ethers/lib/utils"
+import { CarbonRewards__factory } from "../types/factories/CarbonRewards__factory"
 
 const func: DeployFunction = async function (hardhat: HardhatRuntimeEnvironment) {
   let celostrialsAddress = (await hardhat.deployments.getOrNull("Celostrials"))?.address
@@ -26,11 +27,22 @@ const func: DeployFunction = async function (hardhat: HardhatRuntimeEnvironment)
     `${!mockCelo.newlyDeployed ? "✅ MockCelo already deployed" : "🚀  MockCelo deployed"}`
   )
 
+  // CarbonRewards deploy
+  const carbonRewardsAbi = (await hardhat.artifacts.readArtifact("CarbonRewards")).abi
+  let carbonRewardsArgs = [(await hardhat.ethers.getSigners())[0].address, mockCelo.address]
+  const carbonRewardsAddress = await deployProxyAndSave(
+    "CarbonRewards",
+    carbonRewardsArgs,
+    hardhat,
+    carbonRewardsAbi
+  )
+
   // CarbonizedCollection deploy
   const carbonizedCollectionAbi = (await hardhat.artifacts.readArtifact("CarbonizedCollection")).abi
   const carbonizedCollectionArgs = [
     celostrialsAddress,
     carbon.address,
+    carbonRewardsAddress,
     "CarbonizedCelostrials",
     "NFET-NCT",
   ]
@@ -42,15 +54,14 @@ const func: DeployFunction = async function (hardhat: HardhatRuntimeEnvironment)
     carbonizedCollectionAbi
   )
 
-  // CarbonStaking deploy
-  const carbonStakingAbi = (await hardhat.artifacts.readArtifact("CarbonizedCollection")).abi
-  const carbonStakingArgs = [
-    (await hardhat.ethers.getSigners())[0].address,
-    mockCelo.address,
-    carbonizedCollectionAddress,
-  ]
-
-  await deployProxyAndSave("CarbonStaking", carbonStakingArgs, hardhat, carbonStakingAbi)
+  await (
+    await CarbonRewards__factory.connect(
+      carbonRewardsAddress,
+      (
+        await hardhat.ethers.getSigners()
+      )[0]
+    ).setCarbonCollection(carbonizedCollectionAddress)
+  ).wait()
 }
 export default func
 func.tags = ["carbon"]

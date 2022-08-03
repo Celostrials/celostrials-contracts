@@ -69,3 +69,19 @@ export const deployProxyAndSave = async (
   console.log("🚀 ", name, " deployed")
   return contract.address
 }
+
+export const stringToWei = (value: string): ethers.BigNumber => {
+  return ethers.utils.parseUnits(value, "mwei")
+}
+
+export const stringToEth = (value: string): ethers.BigNumber => {
+  return ethers.utils.parseEther(value)
+}
+
+export const weiToString = (value: ethers.BigNumber): string => {
+  return ethers.utils.formatUnits(value, "mwei")
+}
+
+export const ethToString = (value: ethers.BigNumber): string => {
+  return ethers.utils.formatEther(value)
+}

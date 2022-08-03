@@ -11,6 +11,7 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
+  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -18,34 +19,25 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
-interface ICarbonizedCollectionInterface extends ethers.utils.Interface {
+interface ICarbonRewardsInterface extends ethers.utils.Interface {
   functions: {
-    "carbonBalance(address)": FunctionFragment;
-    "totalCarbon()": FunctionFragment;
+    "updateReward(address)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "carbonBalance",
+    functionFragment: "updateReward",
     values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalCarbon",
-    values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "carbonBalance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalCarbon",
+    functionFragment: "updateReward",
     data: BytesLike
   ): Result;
 
   events: {};
 }
 
-export class ICarbonizedCollection extends BaseContract {
+export class ICarbonRewards extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -86,47 +78,37 @@ export class ICarbonizedCollection extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: ICarbonizedCollectionInterface;
+  interface: ICarbonRewardsInterface;
 
   functions: {
-    carbonBalance(
+    updateReward(
       account: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    totalCarbon(overrides?: CallOverrides): Promise<[BigNumber]>;
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
-  carbonBalance(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  totalCarbon(overrides?: CallOverrides): Promise<BigNumber>;
+  updateReward(
+    account: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   callStatic: {
-    carbonBalance(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    totalCarbon(overrides?: CallOverrides): Promise<BigNumber>;
+    updateReward(account: string, overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {};
 
   estimateGas: {
-    carbonBalance(
+    updateReward(
       account: string,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    totalCarbon(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    carbonBalance(
+    updateReward(
       account: string,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    totalCarbon(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

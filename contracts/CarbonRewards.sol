@@ -4,14 +4,20 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interface/ICarbonizedCollection.sol";
+import "./interface/ICarbonRewards.sol";
 
-contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, OwnableUpgradeable {
+contract CarbonRewards is
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    ICarbonRewards
+{
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== STATE VARIABLES ========== */
@@ -25,38 +31,33 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
     address public rewardsDistributor;
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
-    uint256 private _totalSupply;
 
-    // account => tokenId => staked
-    mapping(address => mapping(uint256 => bool)) private tokenDeposit;
-    mapping(address => uint256) private carbonBalance;
     ICarbonizedCollection public carbonCollection;
+
+    mapping(address => bool) public whiteList;
+    bool public onlyWhitelist;
 
     /* ========== CONSTRUCTOR ========== */
 
-    function initialize(
-        address _rewardsDistributor,
-        address _rewardsToken,
-        address _carbonCollection
-    ) external virtual initializer {
+    function initialize(address _rewardsDistributor, address _rewardsToken)
+        external
+        virtual
+        initializer
+    {
         __Ownable_init();
         __Pausable_init();
         rewardsToken = IERC20Upgradeable(_rewardsToken);
-        carbonCollection = ICarbonizedCollection(_carbonCollection);
         rewardsDistributor = _rewardsDistributor;
         periodFinish = 0;
         rewardRate = 0;
-        rewardsDuration = 90 days;
+        rewardsDuration = 180 days;
+        onlyWhitelist = true;
     }
 
     /* ========== VIEWS ========== */
 
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
-    }
-
     function balanceOf(address account) external view returns (uint256) {
-        return carbonBalance[account];
+        return carbonCollection.carbonBalance(account);
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -64,17 +65,18 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (_totalSupply == 0) {
+        if (carbonCollection.totalCarbon() == 0) {
             return rewardPerTokenStored;
         }
         return
             rewardPerTokenStored +
-            (((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18) / _totalSupply);
+            (((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18) /
+                carbonCollection.totalCarbon());
     }
 
     function earned(address account) public view returns (uint256) {
-        return (((carbonBalance[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) /
-            1e18) + rewards[account]);
+        return (((carbonCollection.carbonBalance(account) *
+            (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18) + rewards[account]);
     }
 
     function getRewardForDuration() external view returns (uint256) {
@@ -83,28 +85,7 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 tokenId) external nonReentrant whenNotPaused updateReward(msg.sender) {
-        require(
-            carbonCollection.ownerOf(tokenId) == msg.sender,
-            "CarbonStaking: caller does not own token"
-        );
-        _totalSupply += 1;
-        carbonBalance[msg.sender] += carbonCollection.carbonBalanceOf(tokenId);
-        carbonCollection.safeTransferFrom(msg.sender, address(this), tokenId);
-        tokenDeposit[msg.sender][tokenId] = true;
-        emit Staked(msg.sender, tokenId);
-    }
-
-    function withdraw(uint256 tokenId) public nonReentrant updateReward(msg.sender) {
-        require(tokenDeposit[msg.sender][tokenId], "CarbonStaking: token not deposited by caller");
-        _totalSupply -= 1;
-        carbonBalance[msg.sender] -= carbonCollection.carbonBalanceOf(tokenId);
-        carbonCollection.safeTransferFrom(address(this), msg.sender, tokenId);
-        tokenDeposit[msg.sender][tokenId] = false;
-        emit Withdrawn(msg.sender, tokenId);
-    }
-
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() public nonReentrant _updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -113,17 +94,12 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
         }
     }
 
-    function exit() external {
-        withdraw(carbonBalance[msg.sender]);
-        getReward();
-    }
-
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function notifyRewardAmount(uint256 reward)
         external
         onlyRewardsDistributor
-        updateReward(address(0))
+        _updateReward(address(0))
     {
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
@@ -159,7 +135,7 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
     function updateActiveRewardsDuration(uint256 _rewardsDuration)
         external
         onlyRewardsDistributor
-        updateReward(address(0))
+        _updateReward(address(0))
     {
         require(block.timestamp < periodFinish, "CarbonStaking: Reward period not active");
         require(_rewardsDuration > 0, "CarbonStaking: Reward duration must be non-zero");
@@ -186,9 +162,15 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
         rewardsDistributor = _rewardsDistributor;
     }
 
+    function setCarbonCollection(address _carbonCollection) external onlyOwner {
+        carbonCollection = ICarbonizedCollection(_carbonCollection);
+    }
+
+    function updateReward(address account) public override _updateReward(account) {}
+
     /* ========== MODIFIERS ========== */
 
-    modifier updateReward(address account) {
+    modifier _updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
@@ -201,6 +183,22 @@ contract CarbonStaking is ReentrancyGuardUpgradeable, PausableUpgradeable, Ownab
     modifier onlyRewardsDistributor() {
         require(msg.sender == rewardsDistributor, "Caller is not RewardsDistributor");
         _;
+    }
+
+    function whiteListAccount(address account) public onlyOwner {
+        whiteList[account] = true;
+    }
+
+    function openWhitelist() public onlyOwner {
+        onlyWhitelist = true;
+    }
+
+    function closeWhitelist() public onlyOwner {
+        onlyWhitelist = false;
+    }
+
+    function isWhitelist() external view returns (bool) {
+        return whiteList[msg.sender];
     }
 
     /* ========== EVENTS ========== */

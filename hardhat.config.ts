@@ -19,6 +19,7 @@ import "./tasks/clean"
 import "./tasks/fundedwallet"
 import "./tasks/generate"
 import "./tasks/wallet"
+import "./tasks/sendMockCarbon"
 
 import { CeloProvider } from "@celo-tools/celo-ethers-wrapper"
 

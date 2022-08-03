@@ -13,12 +13,12 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "tokenId",
-        type: "uint256",
+        internalType: "address",
+        name: "account",
+        type: "address",
       },
     ],
-    name: "carbonBalanceOf",
+    name: "carbonBalance",
     outputs: [
       {
         internalType: "uint256",
@@ -30,45 +30,16 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "tokenId",
-        type: "uint256",
-      },
-    ],
-    name: "ownerOf",
+    inputs: [],
+    name: "totalCarbon",
     outputs: [
       {
-        internalType: "address",
-        name: "owner",
-        type: "address",
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "from",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "tokenId",
-        type: "uint256",
-      },
-    ],
-    name: "safeTransferFrom",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
 ];
