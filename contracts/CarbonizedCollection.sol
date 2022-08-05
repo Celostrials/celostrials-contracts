@@ -68,14 +68,15 @@ contract CarbonizedCollection is
         rewards.updateReward(msg.sender);
     }
 
+    // TODO: just found a bug with updating rewards when decarbonizing. Get it dialed
     function decarbonize(uint256 tokenId) public {
+        rewards.updateReward(msg.sender);
         require(carbonDeposit[tokenId] != 0, "CarbonizedCollection: tokenId not carbonized");
         _burn(tokenId);
         originalCollection.safeTransferFrom(address(this), msg.sender, tokenId);
         carbonCredit.safeTransfer(msg.sender, carbonDeposit[tokenId]);
         totalCarbon -= carbonDeposit[tokenId];
         carbonDeposit[tokenId] = 0;
-        rewards.updateReward(msg.sender);
     }
 
     function _transfer(

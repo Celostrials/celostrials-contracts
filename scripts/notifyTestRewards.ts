@@ -12,8 +12,8 @@ async function main(): Promise<void> {
   if (!CeloDeployment) throw Error("No rewards deployment")
   const celo = ERC20__factory.connect(CeloDeployment.address, signer)
   await (await celo.approve(rewards.address, ethers.constants.MaxUint256)).wait()
-  await (await rewards.setRewardsDuration(100)).wait()
-  await (await rewards.notifyRewardAmount(stringToEth("100"))).wait()
+  await (await rewards.setRewardsDuration(1209600)).wait()
+  await (await rewards.notifyRewardAmount(stringToEth("1000"))).wait()
   console.log("💵 rewards notified")
 }
 
