@@ -3,14 +3,7 @@ import { expect } from "chai"
 import chai from "chai"
 import { solidity } from "ethereum-waffle"
 import { stringToEth, stringToWei, ethToString, weiToString } from "../utils/utils"
-import {
-  MockCarbon,
-  MockERC20,
-  CarbonStaking,
-  CarbonizedCollection,
-  Celostrials,
-  CarbonRewards,
-} from "../types"
+import { MockCarbon, MockERC20, CarbonizedCollection, Celostrials, CarbonRewards } from "../types"
 
 chai.use(solidity)
 

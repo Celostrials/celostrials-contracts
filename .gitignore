@@ -6,6 +6,7 @@ artifacts*
 .openzeppelin/unknown-31337.json
 deployments/localhost
 cache*
+types
 
 tenderly.yaml
 
