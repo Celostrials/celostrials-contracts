@@ -56,7 +56,6 @@ describe("Celostrials Tests", function () {
     }
 
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -70,7 +69,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -84,7 +82,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -98,7 +95,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -112,7 +108,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -126,7 +121,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -140,7 +134,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += randomNum
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -154,7 +147,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += 6
-    console.log("Total supply: ", count)
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
@@ -168,51 +160,6 @@ describe("Celostrials Tests", function () {
       expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
     }
     count += 10
-    console.log("Total supply: ", count)
-    const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
-    expect(supply).to.equal(String(count))
-  })
-
-  it("Successfully mints 10", async function () {
-    let tx = await (await celostrials.mint(memberA.address, 10)).wait()
-
-    const events = tx.events ? tx.events : []
-
-    for (let value of events) {
-      expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
-    }
-    count += 10
-    console.log("Total supply: ", count)
-    const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
-    expect(supply).to.equal(String(count))
-  })
-
-  it("Successfully mints 10", async function () {
-    let tx = await (await celostrials.mint(memberA.address, 10)).wait()
-
-    const events = tx.events ? tx.events : []
-
-    for (let value of events) {
-      expect(Number(ethers.utils.formatUnits(value.args?.tokenId, "wei"))).to.be.greaterThan(0)
-    }
-    count += 10
-    console.log("Total supply: ", count)
-    const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
-    expect(supply).to.equal(String(count))
-  })
-
-  it("Successfully mints 160", async function () {
-    for (var i = 0; i <= 15; i++) {
-      let tx = await (await celostrials.mint(memberA.address, 10, { gasLimit: 20000000 })).wait()
-
-      const events = tx.events ? tx.events : []
-
-      for (let value of events) {
-        expect(Number(value.args?.tokenId)).to.be.greaterThan(0)
-      }
-      count += 10
-      console.log("Total supply: ", count)
-    }
     const supply = ethers.utils.formatUnits(await celostrials.totalSupply(), "wei")
     expect(supply).to.equal(String(count))
   })
