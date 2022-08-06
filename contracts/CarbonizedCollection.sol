@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-// Celostrials | Carbonized nfETs
-
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
@@ -15,9 +12,15 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interface/ICarbonizedCollection.sol";
 import "./interface/ICarbonRewards.sol";
 
+/// @title CarbonizedCollection
+/// @author Bridger Zoske
+/// @notice This contract enables holders of the 'originalCollection' ERC721 to Carbonize and
+/// Decarbonize their NFTs. Carbonizing effectively locks the original NFT and mints the
+/// carbonized version, while Decarbonizing burns the carbonized token and unlocks the original.
+/// @dev This contract inherits from both ERC721 that ERC721Receiver which enables both mint
+/// and burn as well as the safe storage of other ERC721 tokens.
 contract CarbonizedCollection is
     OwnableUpgradeable,
-    PausableUpgradeable,
     ERC721EnumerableUpgradeable,
     IERC721ReceiverUpgradeable,
     ICarbonizedCollection
@@ -56,7 +59,7 @@ contract CarbonizedCollection is
         return baseURI;
     }
 
-    function carbonize(uint256 tokenId, uint256 amount) public whenNotPaused {
+    function carbonize(uint256 tokenId, uint256 amount) public {
         require(carbonDeposit[tokenId] == 0, "CarbonizedCollection: tokenId already carbonized");
         require(amount >= minCarbon, "CarbonizedCollection: not enough carbon");
         require(amount <= maxCarbon, "CarbonizedCollection: too much carbon");
@@ -68,7 +71,6 @@ contract CarbonizedCollection is
         rewards.updateReward(msg.sender);
     }
 
-    // TODO: just found a bug with updating rewards when decarbonizing. Get it dialed
     function decarbonize(uint256 tokenId) public {
         rewards.updateReward(msg.sender);
         require(carbonDeposit[tokenId] != 0, "CarbonizedCollection: tokenId not carbonized");
@@ -89,10 +91,7 @@ contract CarbonizedCollection is
         super._transfer(from, to, tokenId);
     }
 
-    function carbonizeBatch(uint256[] memory tokenIds, uint256[] memory amounts)
-        external
-        whenNotPaused
-    {
+    function carbonizeBatch(uint256[] memory tokenIds, uint256[] memory amounts) external {
         require(
             tokenIds.length == amounts.length,
             "CarbonizedCollection: invalid tokenIds and amounts"

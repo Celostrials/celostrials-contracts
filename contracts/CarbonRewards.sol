@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: MIT
-
-// Celostrials | CarbonStaking
-
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -12,6 +9,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interface/ICarbonizedCollection.sol";
 import "./interface/ICarbonRewards.sol";
 
+/// @title CarbonRewards
+/// @author Bridger Zoske
+/// @notice This contract stores and distributes rewards to CarbonizedCollection holders
+/// @dev This contract was modeled after the Synthetix "StakingRewards" contract.
+/// An important difference is the exposed 'updateReward' function used to keep the reward
+/// data up to date when state changes.
 contract CarbonRewards is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable,
@@ -37,8 +40,7 @@ contract CarbonRewards is
     mapping(address => bool) public whiteList;
     bool public onlyWhitelist;
 
-    /* ========== CONSTRUCTOR ========== */
-
+    /* ========== INITIALIZER ========== */
     function initialize(address _rewardsDistributor, address _rewardsToken)
         external
         virtual
@@ -83,6 +85,10 @@ contract CarbonRewards is
         return rewardRate * rewardsDuration;
     }
 
+    function isWhitelist() external view returns (bool) {
+        return whiteList[msg.sender];
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function getReward() public nonReentrant _updateReward(msg.sender) {
@@ -119,7 +125,6 @@ contract CarbonRewards is
         emit RewardAdded(reward);
     }
 
-    // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(carbonCollection), "Cannot withdraw the staking token");
         IERC20Upgradeable(tokenAddress).safeTransfer(owner(), tokenAmount);
@@ -166,6 +171,18 @@ contract CarbonRewards is
         carbonCollection = ICarbonizedCollection(_carbonCollection);
     }
 
+    function whiteListAccount(address account) public onlyOwner {
+        whiteList[account] = true;
+    }
+
+    function openWhitelist() public onlyOwner {
+        onlyWhitelist = true;
+    }
+
+    function closeWhitelist() public onlyOwner {
+        onlyWhitelist = false;
+    }
+
     function updateReward(address account) public override _updateReward(account) {}
 
     /* ========== MODIFIERS ========== */
@@ -183,22 +200,6 @@ contract CarbonRewards is
     modifier onlyRewardsDistributor() {
         require(msg.sender == rewardsDistributor, "Caller is not RewardsDistributor");
         _;
-    }
-
-    function whiteListAccount(address account) public onlyOwner {
-        whiteList[account] = true;
-    }
-
-    function openWhitelist() public onlyOwner {
-        onlyWhitelist = true;
-    }
-
-    function closeWhitelist() public onlyOwner {
-        onlyWhitelist = false;
-    }
-
-    function isWhitelist() external view returns (bool) {
-        return whiteList[msg.sender];
     }
 
     /* ========== EVENTS ========== */
